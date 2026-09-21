@@ -23,8 +23,11 @@ For at least 4 of my 5 test questions, the retrieved chunks include one that
 contains the answer.
 
 **Why this target:**
-<!-- e.g. "One of my questions is about a topic only two documents mention, so
-     I expect that one to be hard." -->
+
+Two of my five questions (housing lottery, dining dollars) come from
+documents I've already confirmed retrieve cleanly at distances under 0.27.
+The other three are less-tested topics, so I expect at least one might not
+retrieve as cleanly — hence 4 of 5, not 5 of 5.
 
 ---
 
@@ -33,8 +36,11 @@ contains the answer.
 Every answer the system produces names at least one source document.
 
 **Why this target:**
-<!-- Why all five and not four? What about your setup makes that achievable —
-     or what would have to go wrong for it not to be? -->
+
+Since campus_life documents are short and mostly self-contained (88 documents,
+88 chunks — one chunk per document at the current chunk size), there's no
+structural reason generation should ever have zero retrieved chunks to cite
+from, as long as the question is in-corpus. 5 of 5 is achievable here.
 
 ---
 
@@ -44,10 +50,12 @@ When I ask a question my documents clearly don't cover, the relevance gate
 stops it and the system returns "I don't have enough information about that" —
 in at least 4 of 5 tries.
 
-<!-- The five questions are the ones in `OUT_OF_SCOPE` at the bottom of
-     `questions.py`, and `run_eval.py` puts them through the gate and writes
-     what happened into your run log. Swap them for your own if you'd rather —
-     just keep five of them, or the "4 of 5" above has nothing to be 4 of. -->
+Not yet measured — I haven't run the actual distance comparison in Milestone
+4 yet. Based on one early example (a pizza question scored 0.512, under my
+current 0.6 cutoff, but the model still declined to answer at the generation
+step), I suspect there may not be a clean gap between in-corpus and
+out-of-corpus distances at 0.6. 4 of 5 accounts for that uncertainty rather
+than assuming a clean separation.
 
 **Why this target:**
 <!-- What did your distances look like when you set the cutoff in Milestone 4?
@@ -59,38 +67,34 @@ in at least 4 of 5 tries.
 
 <!-- YOU WRITE THIS ONE.
 
-     How would you know if your chunks were the right size? Name something
-     countable or observable.
-
-     Examples of the right shape — don't copy these, they should come from
-     what you actually saw in Milestone 3:
-       - "At least 4 of 5 sampled chunks read as a complete thought, with no
-          sentence cut in half at either end."
-       - "No chunk is shorter than 200 characters, since anything below that
-          in my corpus turned out to be a heading with no content under it." -->
-
-
+For at least 4 of 5 sampled chunks, the chunk is exactly one full source
+document — starting at the beginning of the file and ending at its end —
+with no chunk boundary falling in the middle of a sentence.
 
 **Why this target:**
 
+Since campus_life's average document length (317 characters) is well under
+the current chunk size (800 characters), 88 documents produced exactly 88
+chunks — every chunk I've sampled so far (5 of 5) is a whole document, start
+to finish. I set the target at 4 of 5 rather than 5 of 5 because a few
+documents in this corpus (like the "followup" posts) run longer, and I
+haven't checked all of them yet.
 
 
 ---
 
-## 5. Your choice
-
-<!-- YOU WRITE THIS ONE TOO.
-
-     Pick something you actually care about getting right. It could be about
-     speed, about refusals, about a particular kind of question your corpus
-     handles badly, about source attribution being correct rather than merely
-     present — anything, as long as it names a number or an observable
-     outcome. -->
+## 5. The cited source is actually one of the closest matches, not just present
 
 
 
 **Why this target:**
 
+Criterion 2 only checks that *a* source gets named. That's a weaker
+guarantee than the named source actually being the most relevant one. In my
+one test so far (the housing lottery question), the retrieved sources
+included tangentially related documents like admin_parking_permits.txt
+alongside the correct one — so I want to verify the model is citing from the
+strongest matches, not just whatever happened to be in the pool of 5.
 
 
 ---
