@@ -1,6 +1,6 @@
 # The Unofficial Guide
 
-<!-- Replace this line with your name and which corpus you picked. -->
+Kisanet Gabreselassie — campus_life corpus 
 
 > **This file is your submission.** Fill it in as you go — most sections get
 > written during the milestone that produces them, not at the end.
@@ -21,26 +21,25 @@
 
 ## What This Does
 
-<!-- Three or four sentences. Which corpus you picked, and the kinds of
-     questions your system answers. Write it for someone who has never seen
-     this repo.
-
-     Milestone 5. -->
+This is a RAG system over the campus_life corpus: 88 short documents (about
+317 characters each) about student life at a university — dining halls,
+dorms, courses, and administrative rules that aren't explained clearly
+anywhere official. The system answers questions like "is the housing lottery
+random?" by retrieving the most relevant chunks from these documents and
+generating an answer grounded only in what it retrieved, naming its source.
+If nothing retrieved is actually relevant, it says so instead of guessing.
 
 ## Chunking Strategy
 
-**Chunk size:**
-**Overlap:**
+**Chunk size:** 800 characters
+**Overlap:** 120 characters
 
-<!-- What about YOUR documents made you pick these numbers? Short posts and
-     long sectioned guides don't want the same chunking, and "800 seemed
-     reasonable" earns nothing. Point at something you noticed when you read
-     the documents in Milestone 1.
-
-     If you changed your mind partway through, say so and say why. That's worth
-     more than pretending you got it right first time.
-
-     Milestone 3. -->
+These are still the starter's defaults (chunker.py::fallback_split),
+unchanged so far. Almost every document in campus_life is under 800
+characters, so the chunker isn't actually cutting anything apart yet — 88
+documents in, 88 chunks out, one chunk per document. Whether that stays true
+once I look more closely at multi-sentence documents is what Milestone 3 is
+for.
 
 ## Sample Chunks
 
@@ -53,29 +52,58 @@
 
      Milestone 3. -->
 
-**Chunk 1** — source: `` — produced by: ``
+**Chunk 1** — source: ``  `admin_add_drop_deadline.txt#0` — produced by: `chunker.py::fallback_split` ``
 
 ```
+On the add/drop deadline
+
+You can add a course through the end of the second week. Dropping is a longer window — through the end of week six — but a drop after week two shows as a W on your transcript. Nothing anywhere on the registrar's site says this plainly, and students find out from each other.
 ```
 
-**Chunk 2** — source: `` — produced by: ``
+**Chunk 2** — source: `` `course_biol_160.txt#0` — produced by: `chunker.py::fallback_split` ``
 
 ```
+BIOL 160 Cell Biology
+
+I lived here my sophomore year. Format is lecture three times a week with a weekly lab. Assessment: four unit tests and a cumulative final. Not curved.
+
+Expect 9 to 11 hours a week, the heaviest first-year course by reputation.
+
+The one piece of advice: the unit tests come fast, roughly every three weeks; falling behind once is very hard to recover from.
 ```
 
-**Chunk 3** — source: `` — produced by: ``
+**Chunk 3** — source: ``  `course_hist_118_workload.txt#0` — produced by: `chunker.py::fallback_split` ``
 
 ```
+Workload for HIST 118 Modern World History
+
+People keep asking so: a lot of reading, about 120 pages a week, but no problem sets. That's real time, not optimistic time.
+
+It's front-loaded — the first month is heavier than the rest, partly because you're learning the format.
 ```
 
-**Chunk 4** — source: `` — produced by: ``
+**Chunk 4** — source: ``  `dining_pellew_dining_hall_followup.txt#0` — produced by: `chunker.py::fallback_split` ``
 
 ```
+Re: Pellew Dining Hall
+
+Adding to what people have said about Pellew Dining Hall. The wait figure of 12 to 18 minutes at peak matches what I've seen. If you're trying to eat between classes, go before 11:45 and it's a different building entirely.
+
+Also worth saying: the furthest hall from anywhere, next to the athletics centre. Nobody tells you this at orientation.
 ```
 
-**Chunk 5** — source: `` — produced by: ``
+**Chunk 5** — source: `` `housing_innisfree_hall.txt#0` — produced by: `chunker.py::fallback_split` ``
 
 ```
+Innisfree Hall — what it's actually like
+
+Transferred in last year, so take this with a grain of salt. Built 1991, renovated 2022. Rooms are doubles arranged as pairs sharing one bathroom between two rooms.
+
+The good: the shared-bathroom-between-two-rooms arrangement is the best compromise on campus.
+
+The bad: no air conditioning, which matters for the first three weeks of September.
+
+Laundry costs $1.75 wash, $1.75 dry, app-based. On noise: moderate; the building is L-shaped and the short wing is much quieter.
 ```
 
 ## Sample Answer
@@ -83,42 +111,46 @@
 <!-- One complete question and answer, pasted as text, with the source line
      visible. Milestone 4. -->
 
-**Question:**
+**Question:** is the housing lottery random?
 
-**Answer:**
+**Answer:** 
 
 ```
+The housing lottery is not entirely random; rising sophomores get a randomly drawn number, but juniors and seniors are ordered by accumulated credit hours first, with random tie-breaks.
+Source: admin_housing_lottery.txt
 ```
 
-**My relevance cutoff:**
 
-<!-- The number you set in config.py, and how you got there.
 
-     You ran five questions your corpus covers and the five in OUT_OF_SCOPE
-     that it clearly doesn't, and wrote down the best distance for each. What
-     did those two groups look like? Where was the gap? Put the actual numbers
-     here — the table below wants all ten rows.
 
-     Milestone 4. -->
+
+**My relevance cutoff:** 0.6 (starter default — not yet tuned; that's Milestone 4)
 
 | Question | In corpus? | Best distance |
 |---|---|---|
-|  |  |  |
+| is the housing lottery random? | Yes | 0.254 |
+| do dining dollars roll over to the next school year? | Yes | 0.264 |
+| what's the best pizza place near campus? | No | 0.512 |
+
+The third question is a useful early signal for Milestone 4: at 0.512 the
+distance was still under my current cutoff of 0.6, so the relevance gate
+itself didn't block it. What stopped a wrong answer was the generation step
+recognizing that none of the retrieved chunks (dining halls, cafes) named a
+pizza place, so it said "I don't have enough information" rather than
+guessing. That suggests 0.6 may end up too loose once I measure it properly.
+
 
 ## How I Used AI
 
-<!-- Two specific moments. For each: what you asked for, what came back, and
-     what you changed about it.
+**1.** I asked Claude to help debug a `chroma-hnswlib` build failure during
+`pip install`. It diagnosed this as a broken Xcode Command Line Tools install
+on macOS rather than a code problem, and had me reinstall them
+(`sudo rm -rf /Library/Developer/CommandLineTools` then `xcode-select
+--install`), which fixed it.
 
-     "I asked Claude to write the chunking function from my notes. It ignored
-     the overlap, so I added that myself" is the level of detail we're after.
-     "I used AI to help me code" is not.
-
-     Milestone 5. -->
-
-**1.**
-
-**2.**
+**2.** I asked Claude to draft this README's Unit 1 sections from my actual
+terminal output (chunk contents from `python app.py chunks`, and answers from
+`python app.py ask`), rather than writing the summary from scratch myself.
 
 <!-- ── Stretch features ─────────────────────────────────────────────────────
      Doing one? Say so here BEFORE you start. A feature this README never
