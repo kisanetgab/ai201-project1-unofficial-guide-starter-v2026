@@ -179,15 +179,42 @@ terminal output (chunk contents from `python app.py chunks`, and answers from
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunks stay whole document boundaries | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Cited source is in top-3 closest matches | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
 
 <!-- Underneath, paste the REAL output for each criterion from one of your
      runs — the actual text your system produced, not a description of it.
      Name the file and function that produced it. -->
+
+### Real output — Criterion 1 (retrieved chunk contains the answer)
+
+Question: "What happens if I drop a course after week two?"
+
+```
+Sources retrieved: admin_add_drop_deadline.txt, admin_declaring_a_major.txt, admin_grade_appeals.txt, admin_pass_fail_option.txt, admin_withdrawal_deadline.txt
+
+If you drop a course after week two, it shows as a W on your transcript (admin_add_drop_deadline.txt).
+```
+
+The top-ranked retrieved chunk (admin_add_drop_deadline.txt) is the exact source document, and it contains the answer verbatim — this held across all three runs and all five questions.
+
+### Real output — Criterion 3 (gate refuses out-of-corpus questions)
+
+Question: What is the capital of Mongolia? — best distance 0.825 — refused
+
+How do I change the oil in a diesel engine? — best distance 0.934 — refused
+Who won the 1994 World Cup? — best distance 0.886 — refused
+What is the recommended dosage of ibuprofen for a headache? — best distance 0.844 — refused
+How do I write a for loop in Rust? — best distance 0.896 — refused
+
+
+All five out-of-scope questions landed well above the 0.6 cutoff (0.82–0.93), compared to my five in-corpus questions landing well below it (0.165–0.345). That's a clean gap of roughly 0.5, not a close call.
+
+
 
 ## Verdicts
 
@@ -202,11 +229,13 @@ terminal output (chunk contents from `python app.py chunks`, and answers from
 
 | # | Criterion | Verdict | How I decided |
 |---|---|---|---|
-| 1 |  |  |  |
-| 2 |  |  |  |
-| 3 |  |  |  |
-| 4 |  |  |  |
-| 5 |  |  |  |
+| 1 | Retrieved chunk contains the answer | MET | 5/5 on all 3 runs, above my 4/5 target. Every question's top retrieved chunk was the exact source document. |
+| 2 | Every answer names a source | MET | 5/5 on all 3 runs, matching my 5/5 target exactly — no room for slack, and it held. |
+| 3 | Gate stops out-of-corpus questions | MET | 5/5, above my 4/5 target. Distances for out-of-scope questions (0.82–0.93) were clearly separated from in-corpus questions (0.165–0.345) — a gap of roughly 0.5, not a close call. |
+| 4 | Chunks stay whole document boundaries | MET | 5/5 sampled chunks (from python app.py chunks) were each one complete document, start to finish, above my 4/5 target. |
+| 5 | Cited source is in top-3 closest matches | MET | 5/5 — every question's cited source was either the #1 or #2 closest retrieved chunk (never worse), above my 4/5 target. |
+
+
 
 ## Diagnoses
 
