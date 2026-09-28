@@ -271,11 +271,12 @@ One limitation: my scorer only checks whether an expected word appears in the an
 ## The Improvement
 
 **What I changed:**
+Replaced the fixed 800-character chunker with one that splits on paragraph breaks — this produced 271 chunks instead of 88, revealing that many documents actually contained multiple distinct paragraphs (like a "the good / the bad" dorm review) that were previously merged into one chunk.
 
 **Why I picked it:**
 
-<!-- Connect it to a specific diagnosis above in one sentence. If you can't,
-     you picked a fix because it sounded impressive. -->
+My diagnosis flagged that the default chunker was never a deliberate choice, and that criteria 4 and 5 were only tested on easy, single-topic documents — paragraph splitting was a real test of whether document structure mattered for this corpus.
+
 
 ### Run Log — After
 
@@ -284,34 +285,30 @@ One limitation: my scorer only checks whether an expected word appears in the an
 
 | Criterion | Target | Run 1 | Run 2 | Run 3 | Verdict |
 |---|---|---|---|---|---|
-| 1. Retrieved chunk contains the answer | 4 of 5 |  |  |  |  |
-| 2. Every answer names a source | 5 of 5 |  |  |  |  |
-| 3. Gate stops out-of-corpus questions | 4 of 5 |  |  |  |  |
-| 4. | | | | | |
-| 5. | | | | | |
+| 1. Retrieved chunk contains the answer | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 2. Every answer names a source | 5 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 3. Gate stops out-of-corpus questions | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 4. Chunks stay whole document boundaries | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+| 5. Cited source is in top-3 closest matches | 4 of 5 | 5/5 | 5/5 | 5/5 | MET |
+
+Full output in `results/run_2026-09-27_1710_after.md`.
+
 
 **Did it help?**
 
-<!-- Say plainly whether it did, and how you know. If it made things worse,
-     say that — a change that backfired, honestly reported, earns full credit
-     and is more interesting than one that worked. What matters is that you can
-     tell.
+Mixed, honestly. All five criteria still passed at the same rate as before, so nothing changed at the level the criteria measure. But individual distances moved in both directions: 3 of 5 questions got closer to their answer (0.345→0.305, 0.285→0.265, 0.165→0.144), while 2 got slightly further (0.264→0.307, 0.258→0.363) — likely because splitting on paragraphs sometimes separates a fact from the sentence that gives it context, which fixed-size chunking had accidentally kept together. Out-of-scope distances also moved slightly closer to my cutoff (0.877 avg → 0.817 avg), though still comfortably above 0.6.
+
+The clearest win was efficiency: total tokens used dropped from 9,497 to 6,618 across the same 15 calls, since paragraph-sized chunks send less irrelevant text to the model per question. So the change didn't move my pass/fail criteria, but it did make retrieval more precise on average and cheaper to run — a real, if modest, improvement.
 
      Milestone 4. -->
 
 ## What's Still Broken
 
-<!-- For each criterion still missed after your fix: what you'd do about it,
-     and why you stopped where you did.
+Nothing failed outright, but two things are still weakly tested. Criterion 2 ("every answer names a source") can't meaningfully fail given how the code is written, so it isn't really evidence of anything — I'd need to rewrite it to check that the cited source is correct, not just present, to make it a real test. 
 
-     "I ran out of time" is fine if it's true. Pretending nothing is left is
-     not.
+And criteria 4 and 5 have only been tested against short, single-topic questions from campus_life; a messier corpus like advice_threads (with multiple people replying and disagreeing) would be a harder, more honest test of whether chunking and source-citation actually hold up. 
 
-     Milestone 5. -->
 
 ## What I'd Do Differently
 
-<!-- Knowing what you know now — which of your five criteria would you write
-     differently, and why?
-
-     Milestone 5. -->
+I'd tighten criterion 2 from "names a source" (which the code guarantees automatically) to "names the correct source," which is a real test rather than a free pass. I'd also pick harder test questions upfront — all five of mine turned out to be easy single-fact lookups, so I never got to see what a genuine failure looks like or practice diagnosing one for real.

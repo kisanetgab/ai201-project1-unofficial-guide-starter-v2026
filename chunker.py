@@ -82,23 +82,32 @@ def fallback_split(
 
 def split_documents(documents: list[Document]) -> list[Chunk]:
     """
-    Split documents into chunks. ⚠️ REPLACE THE BODY OF THIS IN MILESTONE 3.
+    Split documents by paragraph breaks instead of a fixed character count.
 
-    Right now it just calls the fallback. That is the plain, generic behaviour
-    the brief is talking about.
-
-    When you write your own strategy, set `produced_by` to
-    "chunker.py::split_documents" so your README's Sample Chunks section names
-    the right function. `app.py chunks` prints that string for you.
-
-    Things worth thinking about before you write any code:
-      - Are your documents short posts or long guides?
-      - Is the useful information in one sentence, or spread over a paragraph?
-      - Would splitting on paragraph breaks keep more thoughts intact than
-        splitting on a character count?
+    campus_life documents are short posts (average ~317 characters), but some
+    contain multiple distinct paragraphs (e.g. a "the good / the bad" post
+    about a dorm, or a course review with separate workload and advice
+    sections). Splitting on paragraph breaks keeps each paragraph's single
+    idea intact, rather than either merging unrelated paragraphs into one
+    chunk (fallback_split's behavior here, since most docs are under 800
+    chars) or cutting a sentence in half (fallback_split's behavior on longer
+    docs).
     """
-    return fallback_split(documents)
-
+    chunks: list[Chunk] = []
+    for doc in documents:
+        paragraphs = [p.strip() for p in doc.text.split("\n\n") if p.strip()]
+        if not paragraphs:
+            continue
+        for index, para in enumerate(paragraphs):
+            chunks.append(
+                Chunk(
+                    text=para,
+                    source=doc.source,
+                    index=index,
+                    produced_by="chunker.py::split_documents",
+                )
+            )
+    return chunks
 
 def describe(chunks: list[Chunk]) -> str:
     """A one-line summary, printed after indexing."""
