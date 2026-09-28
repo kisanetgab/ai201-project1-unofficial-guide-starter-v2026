@@ -239,6 +239,17 @@ All five out-of-scope questions landed well above the 0.6 cutoff (0.82–0.93), 
 
 ## Diagnoses
 
+
+Nothing failed — all 5 criteria passed on all 3 runs. Per the assignment's own warning, that's not a sign of a great system; it likely means my targets were too easy to fail.
+
+Criterion 2 ("every answer names a source") is the clearest example: my code always attaches a source to every answer, no matter what. There's no way for it to fail, so it never really tested anything. I'd rewrite it to check whether the cited source is correct, not just present.
+
+Criteria 1 and 3 had real margin (5/5 against a 4/5 target), so those feel like genuine tests, not guaranteed passes.
+
+Criteria 4 and 5 held true this time, but only got tested on easy, single-topic questions. A messier corpus (like advice_threads) would be a harder test.
+
+One limitation: my scorer only checks whether an expected word appears in the answer — it can't catch a made-up fact sitting next to a correct one. I manually checked all 15 answers by hand and found nothing fabricated, but that check wasn't automatic.
+
 <!-- For each miss: which stage caused it, and how. The stage alone isn't
      enough — you need the mechanism.
 
